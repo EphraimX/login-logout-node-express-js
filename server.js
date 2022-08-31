@@ -36,6 +36,23 @@ app.use(bodyParser.json())
 app.post('/api/register', async (req, res) => {
     
     var { username, password } = req.body
+
+    if (!username || typeof username !== 'string'){
+        return res.json({'status': error, 'error': 'Invalid Username'})
+    }
+
+    if (!password || typeof password !== 'string'){
+        return res.json({'status': error, 'error': 'Invalid Username'})
+    }
+
+    if (password.length < 8){
+        return res.json({
+            'status': error, 
+            'error': 'Password less than 8 characters'
+        })
+    }
+
+
     password = await bcrypt.hash(password, 10)
     
     try {
@@ -45,8 +62,11 @@ app.post('/api/register', async (req, res) => {
         })
         console.log(`User created successfully. Details: ${response}`)
     } catch (error) {
-        console.log(error)
-        return res.json({'status': 'error'})
+        if(error.code === 11000){
+            // duplicate key error
+            return res.json({'status': error, 'error message': 'The username already exists'})
+        } 
+        throw error
     }
     res.json({'status': 'ok'})
 })
