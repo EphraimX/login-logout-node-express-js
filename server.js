@@ -23,7 +23,7 @@ try{
     if (conn) console.log('Connection Successful')
 
 } catch(err){
-    console.log(err)
+    console.log( {status : 'error', error: err})
 }
 
 
@@ -36,7 +36,23 @@ app.use(bodyParser.json())
 
 
 app.post('/api/forgot-password', async (req, res)=> {
-    const { token } = req.body
+    const { newPassword, token } = req.body
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    try {
+        const user = await jwt.verify(token, JWT_SECRET)
+        const _id = user.id
+        await User.updateOne({ _id }, {
+            $set: {password: hashedPassword}
+        })
+        console.log(_id)
+    } catch (error){
+        console.log(error)
+        res.json({status : 'error', error : '...Loading'})
+    }
+    
+
+    
+    res.json({ status : 'ok'})
 })
 
 
@@ -58,7 +74,7 @@ app.post('/api/login', async (req, res) => {
             
             
             const token = jwt.sign({
-                id: user._id,
+                id: user[0]._id,
                 username: user[0].username
             }, JWT_SECRET)
     
